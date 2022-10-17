@@ -4,7 +4,7 @@ services:
 ###> doctrine/doctrine-bundle ###
   database:
     ports:
-      - "5432"
+      - ${DB_PORT}:${DB_PORT}
 ###< doctrine/doctrine-bundle ###
 
 ###> symfony/mailer ###
