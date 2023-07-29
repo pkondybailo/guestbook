@@ -7,7 +7,9 @@ use App\Entity\Conference;
 use App\Form\CommentFormType;
 use App\Repository\CommentRepository;
 use App\Repository\ConferenceRepository;
+use App\SpamChecker;
 use Doctrine\ORM\EntityManagerInterface;
+use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,6 +41,7 @@ class ConferenceController extends AbstractController
         Conference        $conference,
         CommentRepository $commentRepository,
         string            $photoDir,
+        SpamChecker       $spamChecker,
     ): Response
     {
         $comment = new Comment();
@@ -60,6 +63,22 @@ class ConferenceController extends AbstractController
             }
 
             $this->entityManager->persist($comment);
+
+            $context = [
+                'user_ip' => $request->getClientIp(),
+                'user_agent' => $request->headers->get('user-agent'),
+                'referrer' => $request->headers->get('referrer'),
+                'permalink' => $request->getUri(),
+            ];
+
+            $spamScore = $spamChecker->getSpamScore($comment, $context);
+
+            dump($spamScore);
+
+            if ($spamScore > 0) {
+                throw new RuntimeException('Blatant spam. Get the fuck off!');
+            }
+
             $this->entityManager->flush();
 
             return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()]);
