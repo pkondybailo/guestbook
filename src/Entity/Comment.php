@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\CommentStatusEnum;
 use App\Repository\CommentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -38,6 +39,9 @@ class Comment
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoFilename = null;
+
+    #[ORM\Column(options: ['default' => 'submitted'])]
+    private string $status = 'submitted';
 
     public function __toString(): string
     {
@@ -123,6 +127,18 @@ class Comment
     public function setPhotoFilename(?string $photoFilename): self
     {
         $this->photoFilename = $photoFilename;
+
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }

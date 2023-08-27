@@ -3,16 +3,19 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Comment;
+use App\Enum\CommentStatusEnum;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
+use Symfony\Component\Form\Extension\Core\Type\EnumType;
 
 class CommentCrudController extends AbstractCrudController
 {
@@ -46,10 +49,11 @@ class CommentCrudController extends AbstractCrudController
             ->setBasePath('/uploads/photos/')
             ->setLabel('Photo')
             ->onlyOnIndex();
+        yield TextField::new('status');
 
         $createdAt = DateTimeField::new('createdAt')->setFormTypeOptions([
             'html5' => true,
-            'years' => range((int) date('Y'), (int) date('Y') + 5),
+            'years' => range((int)date('Y'), (int)date('Y') + 5),
             'widget' => 'single_text',
         ]);
 
