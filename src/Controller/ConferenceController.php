@@ -22,28 +22,28 @@ class ConferenceController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly Environment            $twig,
-        private readonly MessageBusInterface    $messageBus,
-    )
-    {
+        private readonly Environment $twig,
+        private readonly MessageBusInterface $messageBus,
+    ) {
     }
 
     #[Route('/', name: 'homepage')]
     public function index(ConferenceRepository $conferenceRepository): Response
     {
-        return new Response($this->twig->render('conference/index.html.twig', [
-            'conferences' => $conferenceRepository->findAll(),
-        ]));
+        return new Response(
+            $this->twig->render('conference/index.html.twig', [
+                'conferences' => $conferenceRepository->findAll(),
+            ])
+        );
     }
 
     #[Route(path: '/conference/{slug}', name: 'conference')]
     public function show(
-        Request           $request,
-        Conference        $conference,
+        Request $request,
+        Conference $conference,
         CommentRepository $commentRepository,
-        string            $photoDir,
-    ): Response
-    {
+        string $photoDir,
+    ): Response {
         $comment = new Comment();
         $form = $this->createForm(CommentFormType::class, $comment);
         $form->handleRequest($request);
@@ -52,7 +52,7 @@ class ConferenceController extends AbstractController
             $comment->setConference($conference);
 
             if ($photo = $form['photo']->getData()) {
-                $filename = bin2hex(random_bytes(6) . '.' . $photo->guessExtension());
+                $filename = bin2hex(random_bytes(6).'.'.$photo->guessExtension());
 
                 try {
                     $photo->move($photoDir, $filename);
@@ -66,10 +66,10 @@ class ConferenceController extends AbstractController
             $this->entityManager->flush();
 
             $context = [
-                'user_ip' => $request->getClientIp(),
+                'user_ip'    => $request->getClientIp(),
                 'user_agent' => $request->headers->get('user-agent'),
-                'referrer' => $request->headers->get('referrer'),
-                'permalink' => $request->getUri(),
+                'referrer'   => $request->headers->get('referrer'),
+                'permalink'  => $request->getUri(),
             ];
 
             $this->messageBus->dispatch(new CommentMessage($comment->getId(), $context));
@@ -80,12 +80,14 @@ class ConferenceController extends AbstractController
         $offset = max(0, $request->query->getInt('offset', 0));
         $paginator = $commentRepository->getCommentPaginator($conference, $offset);
 
-        return new Response($this->twig->render('conference/show.html.twig', [
-            'conference' => $conference,
-            'comments' => $paginator,
-            'next' => min(count($paginator), $offset + CommentRepository::PAGINATOR_PER_PAGE),
-            'previous' => $offset - CommentRepository::PAGINATOR_PER_PAGE,
-            'comment_form' => $form->createView(),
-        ]));
+        return new Response(
+            $this->twig->render('conference/show.html.twig', [
+                'conference'   => $conference,
+                'comments'     => $paginator,
+                'next'         => min(count($paginator), $offset + CommentRepository::PAGINATOR_PER_PAGE),
+                'previous'     => $offset - CommentRepository::PAGINATOR_PER_PAGE,
+                'comment_form' => $form->createView(),
+            ])
+        );
     }
 }
