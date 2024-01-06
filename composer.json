@@ -43,6 +43,7 @@
         "symfony/twig-bundle": "6.0.*",
         "symfony/validator": "6.0.*",
         "symfony/web-link": "6.0.*",
+        "symfony/webpack-encore-bundle": "^1.17",
         "symfony/workflow": "6.0.*",
         "symfony/yaml": "6.0.*",
         "symfonycorp/platformsh-meta": "^1.0",
