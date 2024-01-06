@@ -8,21 +8,38 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\HttpCache\StoreInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Workflow\Registry;
-use Twig\Environment;
 
+#[Route(path: '/admin')]
 class AdminController extends AbstractController
 {
     public function __construct(
         private readonly MessageBusInterface $bus,
         private readonly EntityManagerInterface $entityManager,
-        private readonly Environment $twig,
     ) {
     }
 
-    #[Route(path: '/admin/comment/review/{id}', name: 'review_comment', methods: ['GET'])]
+    #[Route(path: '/http-cache/{uri<.*>}', methods: ['POST'])]
+    public function purgeHttpCache(
+        KernelInterface $kernel,
+        Request $request,
+        string $uri,
+        StoreInterface $store
+    ): Response {
+        if ('prod' === $kernel->getEnvironment()) {
+            return new Response('KO', 400);
+        }
+
+        $store->purge($request->getSchemeAndHttpHost().'/'.$uri);
+
+        return new Response('DONE');
+    }
+
+    #[Route(path: '/comment/review/{id}', name: 'review_comment', methods: ['GET'])]
     public function reviewComment(Request $request, Comment $comment, Registry $registry): Response
     {
         $accepted = !$request->query->get('reject');

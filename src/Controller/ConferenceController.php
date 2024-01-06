@@ -27,14 +27,28 @@ class ConferenceController extends AbstractController
     ) {
     }
 
+    #[Route(path: '/conference-header', name: 'conference_header')]
+    public function conferenceHeader(ConferenceRepository $conferenceRepository): Response
+    {
+        $response = new Response(
+            $this->twig->render('conference/header.html.twig', ['conferences' => $conferenceRepository->findAll()]),
+        );
+        $response->setSharedMaxAge(3600);
+
+        return $response;
+    }
+
     #[Route('/', name: 'homepage')]
     public function index(ConferenceRepository $conferenceRepository): Response
     {
-        return new Response(
+        $response = new Response(
             $this->twig->render('conference/index.html.twig', [
                 'conferences' => $conferenceRepository->findAll(),
             ])
         );
+        $response->setSharedMaxAge(3600);
+
+        return $response;
     }
 
     #[Route(path: '/conference/{slug}', name: 'conference')]
