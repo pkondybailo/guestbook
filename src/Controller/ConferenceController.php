@@ -14,7 +14,10 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Notifier\Notification\Notification;
+use Symfony\Component\Notifier\NotifierInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Environment;
 use function random_bytes;
 
@@ -57,6 +60,8 @@ class ConferenceController extends AbstractController
         Conference $conference,
         CommentRepository $commentRepository,
         string $photoDir,
+        NotifierInterface $notifier,
+        UrlGeneratorInterface $urlGenerator,
     ): Response {
         $comment = new Comment();
         $form = $this->createForm(CommentFormType::class, $comment);
@@ -86,9 +91,27 @@ class ConferenceController extends AbstractController
                 'permalink'  => $request->getUri(),
             ];
 
-            $this->messageBus->dispatch(new CommentMessage($comment->getId(), $context));
+            $reviewUrl = $urlGenerator->generate(
+                'review_comment',
+                ['id' => $comment->getId()],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            );
+            $this->messageBus->dispatch(new CommentMessage($comment->getId(), $reviewUrl, $context));
+
+            $notifier->send(
+                new Notification(
+                    'Thank you for your feedback! Your comment will be posted after moderation.',
+                    ['browser'],
+                ),
+            );
 
             return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()]);
+        }
+
+        if ($form->isSubmitted()) {
+            $notifier->send(
+                new Notification('Can you check your submission? There are some problems with it.', ['browser']),
+            );
         }
 
         $offset = max(0, $request->query->getInt('offset', 0));

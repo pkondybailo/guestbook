@@ -12,6 +12,7 @@ use Symfony\Component\HttpKernel\HttpCache\StoreInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Workflow\Registry;
 
 #[Route(path: '/admin')]
@@ -40,8 +41,12 @@ class AdminController extends AbstractController
     }
 
     #[Route(path: '/comment/review/{id}', name: 'review_comment', methods: ['GET'])]
-    public function reviewComment(Request $request, Comment $comment, Registry $registry): Response
-    {
+    public function reviewComment(
+        Request $request,
+        Comment $comment,
+        Registry $registry,
+        UrlGeneratorInterface $urlGenerator,
+    ): Response {
         $accepted = !$request->query->get('reject');
         $machine = $registry->get($comment);
 
@@ -57,7 +62,12 @@ class AdminController extends AbstractController
         $this->entityManager->flush();
 
         if ($accepted) {
-            $this->bus->dispatch(new CommentMessage($comment->getId()));
+            $reviewUrl = $urlGenerator->generate(
+                'review_comment',
+                ['id' => $comment->getId()],
+                UrlGeneratorInterface::ABSOLUTE_URL,
+            );
+            $this->bus->dispatch(new CommentMessage($comment->getId(), $reviewUrl));
         }
 
         return $this->render('admin/review.html.twig', [

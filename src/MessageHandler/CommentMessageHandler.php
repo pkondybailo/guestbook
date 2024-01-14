@@ -4,14 +4,15 @@ namespace App\MessageHandler;
 
 use App\ImageOptimizer;
 use App\Message\CommentMessage;
+use App\Notification\CommentReviewNotification;
 use App\Repository\CommentRepository;
 use App\SpamChecker;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Bridge\Twig\Mime\NotificationEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Notifier\NotifierInterface;
 use Symfony\Component\Workflow\WorkflowInterface;
 
 class CommentMessageHandler implements MessageHandlerInterface
@@ -25,6 +26,7 @@ class CommentMessageHandler implements MessageHandlerInterface
         private readonly ImageOptimizer $imageOptimizer,
         private readonly LoggerInterface $logger,
         private readonly MailerInterface $mailer,
+        private readonly NotifierInterface $notifier,
         private readonly string $photoDir,
         private readonly SpamChecker $spamChecker,
     ) {
@@ -58,14 +60,10 @@ class CommentMessageHandler implements MessageHandlerInterface
 
         if ($this->commentStateMachine->can($comment, 'publish')
             || $this->commentStateMachine->can($comment, 'publish_ham')) {
-            $notificationEmail = (new NotificationEmail())
-                ->subject('New comment posted')
-                ->htmlTemplate('emails/comment_notification.html.twig')
-                ->from($this->adminEmail)
-                ->to($this->adminEmail)
-                ->context(['comment' => $comment]);
-
-            $this->mailer->send($notificationEmail);
+            $this->notifier->send(
+                new CommentReviewNotification($comment, $commentMessage->reviewUrl),
+                ...$this->notifier->getAdminRecipients(),
+            );
         } elseif ($this->commentStateMachine->can($comment, 'optimize')) {
             if ($comment->getPhotoFilename()) {
                 $this->imageOptimizer->resize($this->photoDir.'/'.$comment->getPhotoFilename());
