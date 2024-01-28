@@ -2,55 +2,64 @@
 
 namespace App\Entity;
 
-use App\Enum\CommentStatusEnum;
+use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\CommentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ApiResource(
+    collectionOperations: ['get' => ['normalization_context' => ['groups' => 'comment:list']]],
+    itemOperations: ['get' => ['normalization_context' => ['groups' => 'comment:item']]],
+    order: ['createdAt' => 'DESC'],
+    paginationEnabled: false,
+)]
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 class Comment
 {
+    #[Assert\NotBlank]
+    #[Groups(['comment:list', 'comment:item'])]
+    #[ORM\Column(length: 255)]
+    private ?string $author = null;
+
+    #[Groups(['comment:list', 'comment:item'])]
+    #[ORM\ManyToOne(inversedBy: 'comments')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Conference $conference = null;
+
+    #[Groups(['comment:list', 'comment:item'])]
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[Assert\Email]
+    #[Assert\NotBlank]
+    #[Groups(['comment:list', 'comment:item'])]
+    #[ORM\Column(length: 255)]
+    private ?string $email = null;
+
+    #[Groups(['comment:list', 'comment:item'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[Assert\NotBlank]
-    #[ORM\Column(length: 255)]
-    private ?string $author = null;
-
-    #[Assert\NotBlank]
-    #[ORM\Column(type: Types::TEXT)]
-    private ?string $text = null;
-
-    #[Assert\Email]
-    #[Assert\NotBlank]
-    #[ORM\Column(length: 255)]
-    private ?string $email = null;
-
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
-
-    #[ORM\ManyToOne(inversedBy: 'comments')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Conference $conference = null;
-
+    #[Groups(['comment:list', 'comment:item'])]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoFilename = null;
 
     #[ORM\Column(options: ['default' => 'submitted'])]
     private string $status = 'submitted';
 
+    #[Assert\NotBlank]
+    #[Groups(['comment:list', 'comment:item'])]
+    #[ORM\Column(type: Types::TEXT)]
+    private ?string $text = null;
+
     public function __toString(): string
     {
         return $this->email;
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
     }
 
     public function getAuthor(): ?string
@@ -65,26 +74,14 @@ class Comment
         return $this;
     }
 
-    public function getText(): ?string
+    public function getConference(): ?Conference
     {
-        return $this->text;
+        return $this->conference;
     }
 
-    public function setText(string $text): self
+    public function setConference(?Conference $conference): self
     {
-        $this->text = $text;
-
-        return $this;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): self
-    {
-        $this->email = $email;
+        $this->conference = $conference;
 
         return $this;
     }
@@ -101,22 +98,21 @@ class Comment
         return $this;
     }
 
-    #[ORM\PrePersist]
-    public function setCreatedAtValue(): void
+    public function getEmail(): ?string
     {
-        $this->createdAt = new \DateTimeImmutable();
+        return $this->email;
     }
 
-    public function getConference(): ?Conference
+    public function setEmail(string $email): self
     {
-        return $this->conference;
-    }
-
-    public function setConference(?Conference $conference): self
-    {
-        $this->conference = $conference;
+        $this->email = $email;
 
         return $this;
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
     }
 
     public function getPhotoFilename(): ?string
@@ -141,5 +137,23 @@ class Comment
         $this->status = $status;
 
         return $this;
+    }
+
+    public function getText(): ?string
+    {
+        return $this->text;
+    }
+
+    public function setText(string $text): self
+    {
+        $this->text = $text;
+
+        return $this;
+    }
+
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
     }
 }
