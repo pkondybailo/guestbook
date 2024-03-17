@@ -30,18 +30,24 @@ class ConferenceController extends AbstractController
     ) {
     }
 
-    #[Route(path: '/conference-header', name: 'conference_header')]
+    #[Route(path: '/{_locale<%app.supported_locales%>}/conference-header', name: 'conference_header')]
     public function conferenceHeader(ConferenceRepository $conferenceRepository): Response
     {
         $response = new Response(
             $this->twig->render('conference/header.html.twig', ['conferences' => $conferenceRepository->findAll()]),
         );
-        $response->setSharedMaxAge(3600);
+        // $response->setSharedMaxAge(3600);
 
         return $response;
     }
 
-    #[Route('/', name: 'homepage')]
+    #[Route(path: '/', name: 'homepage_no_locale')]
+    public function indexNoLocale(): Response
+    {
+        return $this->redirectToRoute('homepage', ['_locale' => 'en']);
+    }
+
+    #[Route(path: '/{_locale<%app.supported_locales%>}', name: 'homepage')]
     public function index(ConferenceRepository $conferenceRepository): Response
     {
         $response = new Response(
@@ -49,12 +55,12 @@ class ConferenceController extends AbstractController
                 'conferences' => $conferenceRepository->findAll(),
             ])
         );
-        $response->setSharedMaxAge(3600);
+        // $response->setSharedMaxAge(3600);
 
         return $response;
     }
 
-    #[Route(path: '/conference/{slug}', name: 'conference')]
+    #[Route(path: '/{_locale<%app.supported_locales%>}/conference/{slug}', name: 'conference')]
     public function show(
         Request $request,
         Conference $conference,

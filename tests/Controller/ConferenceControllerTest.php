@@ -13,7 +13,7 @@ class ConferenceControllerTest extends PantherTestCase
     public function testIndex(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/');
+        $client->request('GET', '/en/');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h2', 'Give your feedback!');
@@ -22,7 +22,7 @@ class ConferenceControllerTest extends PantherTestCase
     public function testCommentSubmission(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/conference/amsterdam-2020');
+        $client->request('GET', '/en/conference/amsterdam-2020');
         $email = 'comment@mail.com';
         $client->submitForm('Submit', [
             'comment_form[author]' => 'Test Submission',
@@ -44,7 +44,7 @@ class ConferenceControllerTest extends PantherTestCase
     public function testConferencePage(): void
     {
         $client = static::createClient();
-        $crawler = $client->request('GET', '/');
+        $crawler = $client->request('GET', '/en/');
 
         self::assertCount(2, $crawler->filter('h4'));
 

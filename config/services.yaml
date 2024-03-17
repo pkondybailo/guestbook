@@ -1,4 +1,5 @@
 parameters:
+    app.supported_locales: 'en|fr'
     default_admin_email: admin@example.com
     default_domain: localhost
     default_scheme: http
